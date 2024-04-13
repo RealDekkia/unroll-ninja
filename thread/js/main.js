@@ -3,7 +3,6 @@ const threadUnroll = {
     initPage: function () {
         var params = new URLSearchParams(window.location.search);
         if (params.size <= 1) {
-            //TODO: return back to main site
         } else {
             var instanceUri = params.get("uri");
             var statusID = params.get("id");
@@ -12,7 +11,6 @@ const threadUnroll = {
                 threadUnroll.initApi(instanceUri);
                 threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses);
             } else {
-                //TODO: return back to main site
             }
         }
     },
@@ -33,14 +31,11 @@ const threadUnroll = {
             threadUnroll.api.get("statuses/" + statusID + "/context", {}, function (data) {
                 if (data.ancestors.length > 0 && previousStatusArr.length == 0) {
                     //The given post wasn't the first one in the thread.
-                    //TODO: get the previous ones as well.
+                    //maybe get the previous ones as well: https://github.com/RealDekkia/unroll-ninja/issues/5
                     //Or at least show a proper warning to the user
                     window.alert("The Linked post isn't the first post in the thread.");
                 }
 
-                //TODO: Add option to log in for long threads
-                //TODO: Add option to stitch together broken threads
-                //TODO: Draw progress-bar or something to tell user something is happening.
                 if (data.descendants.length > 0) {
                     //There's more where this came from. Go get it.
                     previousStatusArr = previousStatusArr.concat(data.descendants);
@@ -88,7 +83,6 @@ const threadUnroll = {
         threadInfoPostCnt.id = "threadInfoPostCnt";
         threadInfo.appendChild(threadInfoPostCnt);
 
-        //TODO: make this look better.
         threadInfo.className = "threadInfo";
         threadInfo.innerHTML += ", Created: " + new Date(statusArr[0].created_at).toLocaleTimeString() + " " + new Date(statusArr[0].created_at).toLocaleDateString();
         userHeader.appendChild(threadInfo);
@@ -99,7 +93,6 @@ const threadUnroll = {
         var postCnt = 0;
         statusArr.forEach(status => {
             //Only list posts from OP.
-            //TODO: add option to toggle this on or off
             if (statusArr[0].account.url == status.account.url) {
                 var statusBox = document.createElement("section");
                 statusBox.innerHTML = status.content;
@@ -120,7 +113,6 @@ const threadUnroll = {
 
                             statusBox.appendChild(imgBox);
                         } else {
-                            //TODO: handle other media types
                         }
                     });
                 }

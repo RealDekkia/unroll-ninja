@@ -22,7 +22,6 @@ var main = {
             document.location = "thread?uri=" + encodeURIComponent(serverDomain) + "&id=" + encodeURIComponent(postID);
 
         } else {
-            //TODO: Show error-message
         }
     }
 };

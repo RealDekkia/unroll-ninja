@@ -17,7 +17,6 @@ section:first-child {
 
 section:hover {
     background-color: var(--accent-bg);
-    /*TODO: Add buttons that link directly to the post and show them when hovering over the post*/
 }
 
 .userHeader {
