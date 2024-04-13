@@ -9,7 +9,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.png" />
 
   <link rel="stylesheet" href="lib/simple.css-2.3.0/simple.min.css" type="text/css" />
-  <link rel="stylesheet" href="css/colors.css" type="text/css" />
+  <link rel="stylesheet" href="css/global.css" type="text/css" />
   <link rel="stylesheet" href="css/style.css" type="text/css" />
 </head>
 
@@ -18,10 +18,36 @@
     <img id="topBarImage" src="img/logo.svg">
     <h1 id="topBarText">Unroll Ninja</h1>
   </div>
+
   <form id="urlInputForm" action="javascript:main.unrollButton();">
-    <input type="url" id="posturl" />
+    <input type="url" id="posturl" placeholder="Link to Mastodon Thread" />
     <button id="startUnrollButton">Unroll</button>
   </form>
+
+  <div id="explainerText">
+    <h4>QA:</h4>
+    <h5>What is this?</h5>
+    <p>This is a browser app that displays a Mastodon thread of your choosing on one convenient page.</p>
+    <h5>Does it work with fedi-servers that aren't Mastodon?</h5>
+    <p>Probably not. Maybe in the future.</p>
+    <h5>Why not?</h5>
+    <p>Because I'm using the Mastodon API to get the data.</p>
+    <h5>Why?</h5>
+    <p>Because I don't know how to get a specific post from a server using ActivityPub. I'm not even sure if that's
+      possible.</p>
+    <h5>Can I ask you some more Questions?</h5>
+    <p>You already did.</p>
+    <h5>How does it work?</h5>
+    <p>You copy-paste the URL of the first post of the thread into the Box above and click <mark>Unroll</mark>. It'll
+      then generate
+      the page
+      right in your browser.</p>
+    <h5>But how does it really work?</h5>
+    <p>Magic. And the code <a href="https://github.com/RealDekkia/unroll-ninja">here</a>. But mostly Magic.</p>
+    <h5>Thanks.</h5>
+    <p>That's not a question.</p>
+  </div>
+
   <div id="pageFooter">
     <a href="https://github.com/RealDekkia/unroll-ninja">https://github.com/RealDekkia/unroll-ninja</a>
   </div>

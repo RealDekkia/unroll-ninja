@@ -6,8 +6,9 @@ body {
 
 body {
     display: grid;
-    grid-template-rows: 20vh auto 3vh;
+    grid-template-rows: 18vh 20vh calc(100% - 41vh) 3vh;
     grid-template-columns: 100%;
+    overflow: hidden;
 }
 
 #topBarBox {
@@ -15,7 +16,7 @@ body {
     grid-column: 1;
     background-color: var(--accent-bg);
     display: grid;
-    grid-template-columns: 20vh auto;
+    grid-template-columns: 18vh auto;
     grid-template-rows: 100%;
 }
 
@@ -37,9 +38,20 @@ body {
     align-self: center;
 }
 
+#explainerText {
+    grid-row: 3;
+    grid-column: 1;
+    align-self: start;
+    justify-self: center;
+    width: 90%;
+    max-width: 50rem;
+    overflow-y: auto;
+    height: 100%;
+}
+
 #pageFooter {
     background-color: var(--accent-bg);
-    grid-row: 3;
+    grid-row: 4;
     grid-column: 1;
     font-weight: lighter;
     text-align: right;
