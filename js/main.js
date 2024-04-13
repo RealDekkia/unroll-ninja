@@ -42,6 +42,38 @@ const threadUnroll = {
         console.log(statusArr);
         var mb = document.getElementById("mainBody");
 
+        //Draw header with info about the user and the thread
+        var userHeader = document.createElement("div");
+        userHeader.className = "userHeader";
+        userHeader.style.backgroundImage = "url(" + statusArr[0].account.header + ")";
+
+        var username = document.createElement("a");
+        username.className = "userName";
+        username.innerHTML = statusArr[0].account.display_name;
+        username.href = statusArr[0].account.url;
+        userHeader.appendChild(username);
+
+        if (statusArr[0].account.bot) {
+            var isBot = document.createElement("mark");
+            isBot.className = "userIsBot";
+            isBot.innerHTML = "Bot";
+            username.appendChild(isBot);
+        }
+
+        var userImg = document.createElement("img");
+        userImg.className = "userImage";
+        userImg.alt = "Profile picture of " + statusArr[0].account.display_name;
+        userImg.src = statusArr[0].account.avatar;
+        userHeader.appendChild(userImg);
+
+        var threadInfo = document.createElement("span");
+        //TODO: make this look better.
+        threadInfo.className = "threadInfo";
+        threadInfo.innerHTML = statusArr.length + " Posts, Created: " + new Date(statusArr[0].created_at).toLocaleTimeString() + " " + new Date(statusArr[0].created_at).toLocaleDateString();
+        userHeader.appendChild(threadInfo);
+
+        mb.appendChild(userHeader);
+
         //Print all posts
         statusArr.forEach(status => {
             //Only list posts from OP.
