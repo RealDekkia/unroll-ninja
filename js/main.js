@@ -67,14 +67,20 @@ const threadUnroll = {
         userHeader.appendChild(userImg);
 
         var threadInfo = document.createElement("span");
+
+        var threadInfoPostCnt = document.createElement("span");
+        threadInfoPostCnt.id = "threadInfoPostCnt";
+        threadInfo.appendChild(threadInfoPostCnt);
+
         //TODO: make this look better.
         threadInfo.className = "threadInfo";
-        threadInfo.innerHTML = statusArr.length + " Posts, Created: " + new Date(statusArr[0].created_at).toLocaleTimeString() + " " + new Date(statusArr[0].created_at).toLocaleDateString();
+        threadInfo.innerHTML += ", Created: " + new Date(statusArr[0].created_at).toLocaleTimeString() + " " + new Date(statusArr[0].created_at).toLocaleDateString();
         userHeader.appendChild(threadInfo);
 
         mb.appendChild(userHeader);
 
         //Print all posts
+        var postCnt = 0;
         statusArr.forEach(status => {
             //Only list posts from OP.
             //TODO: add option to toggle this on or off
@@ -104,8 +110,17 @@ const threadUnroll = {
                 }
 
                 mb.appendChild(statusBox);
+                postCnt++;
             }
         });
+
+        document.getElementById("threadInfoPostCnt").innerHTML = postCnt;
+        if (postCnt == 1) {
+            document.getElementById("threadInfoPostCnt").innerHTML += " Post";
+        } else {
+            document.getElementById("threadInfoPostCnt").innerHTML += " Posts";
+        }
+
     }
 };
 
