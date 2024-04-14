@@ -115,7 +115,23 @@ const threadUnroll = {
                             imgBox.appendChild(imgCaption);
 
                             statusBox.appendChild(imgBox);
+                        } else if (media.type == "video" || media.type == "gifv") {
+                            var vidBox = document.createElement("figure");
+
+                            var vid = document.createElement("video");
+                            vid.setAttribute("controls", "");
+                            vid.alt = media.description;
+                            vid.src = media.url;
+                            vidBox.appendChild(vid);
+
+                            var vidCaption = document.createElement("figcaption");
+                            vidCaption.innerHTML = media.description;
+                            vidBox.appendChild(vidCaption);
+
+                            statusBox.appendChild(vidBox);
+                        } else if (media.type == "audio") {
                         } else {
+                            //error-message: unknown media type
                         }
                     });
                 }
