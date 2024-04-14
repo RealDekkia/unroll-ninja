@@ -54,6 +54,7 @@ const threadUnroll = {
     drawstatuses: function (statusArr) {
         console.log(statusArr);
         var mb = document.getElementById("mainBody");
+        mb.innerHTML = "";
 
         //Draw header with info about the user and the thread
         var userHeader = document.createElement("div");

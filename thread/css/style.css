@@ -33,6 +33,18 @@ body {
     width: 100%;
 }
 
+.spinnerContainer {
+    height: 100%;
+    width: 100%;
+    display: grid;
+}
+
+.spinnerContainer>.lds-grid {
+    align-self: center;
+    justify-self: center;
+    zoom: 1.5;
+}
+
 section {
     margin: unset;
     padding: unset;
