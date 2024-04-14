@@ -45,6 +45,10 @@ body {
     overflow: hidden;
 }
 
+figure audio {
+    width: 100%;
+}
+
 #topBarBox {
     grid-row: 1;
     grid-column: 1;

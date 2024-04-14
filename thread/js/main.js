@@ -130,8 +130,21 @@ const threadUnroll = {
 
                             statusBox.appendChild(vidBox);
                         } else if (media.type == "audio") {
+                            var jukebox = document.createElement("figure");
+
+                            var audio = document.createElement("audio");
+                            audio.setAttribute("controls", "");
+                            audio.alt = media.description;
+                            audio.src = media.url;
+                            jukebox.appendChild(audio);
+
+                            var audioCaption = document.createElement("figcaption");
+                            audioCaption.innerHTML = media.description;
+                            jukebox.appendChild(audioCaption);
+
+                            statusBox.appendChild(jukebox);
                         } else {
-                            //error-message: unknown media type
+                            //TODO error-message: unknown media type
                         }
                     });
                 }
