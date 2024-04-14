@@ -119,7 +119,9 @@ const threadUnroll = {
                             mediaContent.src = media.url;
                             mediaBox.appendChild(mediaContent);
                         } else {
-                            //No known media type
+                            var errorMark = document.createElement("mark");
+                            errorMark.innerHTML = "Unknown media type \"" + media.type + "\".";
+                            mediaBox.appendChild(errorMark);
                         }
 
                         var mediaCaption = document.createElement("figcaption");
