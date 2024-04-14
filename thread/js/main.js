@@ -87,7 +87,7 @@ const threadUnroll = {
         threadInfo.appendChild(threadInfoPostCnt);
 
         threadInfo.className = "threadInfo";
-        threadInfo.innerHTML += ", Created: " + new Date(statusArr[0].created_at).toLocaleTimeString() + " " + new Date(statusArr[0].created_at).toLocaleDateString();
+        threadInfo.innerHTML += ", Created: " + new Date(statusArr[0].created_at).toLocaleString();
         userHeader.appendChild(threadInfo);
 
         mb.appendChild(userHeader);
