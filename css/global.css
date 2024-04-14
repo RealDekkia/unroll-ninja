@@ -4,6 +4,7 @@
     --markedfg: var(--accent-text);
     --bannerfg: #ffc400;
     --bannerbg: #212121;
+    --accentbgdark: #e2e7fd;
     --headerbg: rgba(255, 255, 255, .65);
     --headerblend: lighten;
 }
@@ -12,9 +13,16 @@
     :root {
         --accent: #858AFA;
         --marked: #858AFA;
+        --accentbgdark: #161616;
         --headerbg: rgba(0, 0, 0, .65);
         --headerblend: darken;
     }
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
 }
 
 mark {
@@ -28,4 +36,42 @@ banner {
     display: none;
     background-color: var(--bannerfg);
     color: var(--bannerbg);
+}
+
+body {
+    display: grid;
+    grid-template-rows: 18vh 20vh calc(100% - 41vh) 3vh;
+    grid-template-columns: 100%;
+    overflow: hidden;
+}
+
+#topBarBox {
+    grid-row: 1;
+    grid-column: 1;
+    background-color: var(--accent-bg);
+    display: grid;
+    grid-template-columns: 18vh auto;
+    grid-template-rows: 100%;
+}
+
+#topBarBox #topBarImage {
+    height: 15vh;
+    justify-self: center;
+    align-self: center;
+}
+
+#topBarBox #topBarText {
+    justify-self: left;
+    align-self: center;
+}
+
+#pageFooter {
+    background-color: var(--accent-bg);
+    grid-row: 4;
+    grid-column: 1;
+    font-weight: lighter;
+    text-align: right;
+    padding-right: 1vw;
+    line-height: 3vh;
+    font-size: 1.5vh;
 }
