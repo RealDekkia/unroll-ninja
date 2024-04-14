@@ -102,50 +102,31 @@ const threadUnroll = {
 
                 if (status.media_attachments) {
                     status.media_attachments.forEach(media => {
+
+                        var mediaBox = document.createElement("figure");
+                        var mediaContent = undefined;
                         if (media.type == "image") {
-                            var imgBox = document.createElement("figure");
-
-                            var img = document.createElement("img");
-                            img.alt = media.description;
-                            img.src = media.url;
-                            imgBox.appendChild(img);
-
-                            var imgCaption = document.createElement("figcaption");
-                            imgCaption.innerHTML = media.description;
-                            imgBox.appendChild(imgCaption);
-
-                            statusBox.appendChild(imgBox);
+                            mediaContent = document.createElement("img");
                         } else if (media.type == "video" || media.type == "gifv") {
-                            var vidBox = document.createElement("figure");
-
-                            var vid = document.createElement("video");
-                            vid.setAttribute("controls", "");
-                            vid.alt = media.description;
-                            vid.src = media.url;
-                            vidBox.appendChild(vid);
-
-                            var vidCaption = document.createElement("figcaption");
-                            vidCaption.innerHTML = media.description;
-                            vidBox.appendChild(vidCaption);
-
-                            statusBox.appendChild(vidBox);
+                            mediaContent = document.createElement("video");
+                            mediaContent.setAttribute("controls", "");
                         } else if (media.type == "audio") {
-                            var jukebox = document.createElement("figure");
-
-                            var audio = document.createElement("audio");
-                            audio.setAttribute("controls", "");
-                            audio.alt = media.description;
-                            audio.src = media.url;
-                            jukebox.appendChild(audio);
-
-                            var audioCaption = document.createElement("figcaption");
-                            audioCaption.innerHTML = media.description;
-                            jukebox.appendChild(audioCaption);
-
-                            statusBox.appendChild(jukebox);
-                        } else {
-                            //TODO error-message: unknown media type
+                            mediaContent = document.createElement("audio");
+                            mediaContent.setAttribute("controls", "");
                         }
+                        if (mediaContent) {
+                            mediaContent.alt = media.description;
+                            mediaContent.src = media.url;
+                            mediaBox.appendChild(mediaContent);
+                        } else {
+                            //No known media type
+                        }
+
+                        var mediaCaption = document.createElement("figcaption");
+                        mediaCaption.innerHTML = media.description;
+                        mediaBox.appendChild(mediaCaption);
+
+                        statusBox.appendChild(mediaBox);
                     });
                 }
 
