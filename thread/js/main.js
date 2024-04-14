@@ -3,6 +3,7 @@ const threadUnroll = {
     initPage: function () {
         var params = new URLSearchParams(window.location.search);
         if (params.size <= 1) {
+            document.location = "../";
         } else {
             var instanceUri = params.get("uri");
             var statusID = params.get("id");
@@ -11,6 +12,7 @@ const threadUnroll = {
                 threadUnroll.initApi(instanceUri);
                 threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses);
             } else {
+                document.location = "../";
             }
         }
     },
