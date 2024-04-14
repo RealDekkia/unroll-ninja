@@ -1,6 +1,9 @@
 var main = {
     init: function () {
-
+        //Hide banner in case it's been displayed previously
+        document.getElementById("posturl").onkeydown = function () {
+            document.getElementById("underInputBanner").style.display = "none";
+        };
     },
     unrollButton: function () {
         var postUrl = document.getElementById("posturl").value;
@@ -22,6 +25,13 @@ var main = {
             document.location = "thread?uri=" + encodeURIComponent(serverDomain) + "&id=" + encodeURIComponent(postID);
 
         } else {
+            //Normally this should never show up
+            //Because the browser is supposed to catch this.
+            //But let's better be save then sorry.
+            var banner = document.getElementById("underInputBanner");
+            banner.innerHTML = "The URL is in the wrong format.";
+            banner.style.display = "block";
         }
     }
 };
+main.init();

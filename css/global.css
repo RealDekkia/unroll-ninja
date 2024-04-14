@@ -2,6 +2,8 @@
     --accent: #2F0C7A;
     --marked: #2F0C7A;
     --markedfg: var(--accent-text);
+    --bannerfg: #ffc400;
+    --bannerbg: #212121;
     --headerbg: rgba(255, 255, 255, .65);
     --headerblend: lighten;
 }
@@ -17,4 +19,13 @@
 
 mark {
     color: var(--markedfg);
+}
+
+banner {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--standard-border-radius);
+    display: none;
+    background-color: var(--bannerfg);
+    color: var(--bannerbg);
 }
