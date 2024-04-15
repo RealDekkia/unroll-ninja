@@ -146,6 +146,30 @@ const threadUnroll = {
                     });
                 }
 
+                if (status.card && status.card.image) {
+                    var cardWrapper = document.createElement("a");
+                    cardWrapper.className = "cardWrapper";
+                    cardWrapper.href = status.card.url;
+
+                    var cardImage = document.createElement("img");
+                    cardImage.src = status.card.image;
+                    cardWrapper.appendChild(cardImage);
+
+                    var cardImageSubline = document.createElement("p");
+                    cardImageSubline.innerHTML = status.card.provider_name + " - " + new Date(status.card.published_at).toLocaleString();;
+                    cardWrapper.appendChild(cardImageSubline);
+
+                    var cardHeadline = document.createElement("h4");
+                    cardHeadline.innerHTML = status.card.title;
+                    cardWrapper.appendChild(cardHeadline);
+
+                    var cardAutor = document.createElement("p");
+                    cardAutor.innerHTML = status.card.author_name;
+                    cardWrapper.appendChild(cardAutor);
+
+                    statusBox.appendChild(cardWrapper);
+                }
+
                 mb.appendChild(statusBoxWrapper);
                 postCnt++;
             }

@@ -110,6 +110,23 @@ section:hover {
     color: inherit;
 }
 
+.cardWrapper,
+.cardWrapper:visited {
+    color: inherit;
+    overflow: hidden;
+    display: block;
+    margin: 2vw;
+    padding: 1vw;
+    border-radius: 2vh;
+    text-decoration: inherit;
+    background-color: var(--accent-bg);
+}
+
+.cardWrapper:hover,
+.cardWrapper:visited:hover {
+    background-color: var(--bg);
+}
+
 #pageFooter {
     grid-row: 3;
 }
