@@ -112,7 +112,12 @@ const threadUnroll = {
                 if (status.media_attachments) {
                     status.media_attachments.forEach(media => {
 
-                        var mediaBox = document.createElement("figure");
+                        var mediaBox = document.createElement("a");
+                        mediaBox.className = "statusBoxWrapper";
+                        mediaBox.href = media.url;
+                        mediaBox.target = "_blank";
+                        mediaBox.rel = "noopener noreferrer";
+
                         var mediaContent = undefined;
                         if (media.type == "image") {
                             mediaContent = document.createElement("img");
