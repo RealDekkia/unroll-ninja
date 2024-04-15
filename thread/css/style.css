@@ -104,6 +104,12 @@ section:hover {
     text-wrap: balance;
 }
 
+.statusBoxWrapper,
+.statusBoxWrapper:visited {
+    display: contents;
+    color: inherit;
+}
+
 #pageFooter {
     grid-row: 3;
 }

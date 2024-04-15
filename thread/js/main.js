@@ -97,7 +97,16 @@ const threadUnroll = {
         statusArr.forEach(status => {
             //Only list posts from OP.
             if (statusArr[0].account.url == status.account.url) {
+
+                var statusBoxWrapper = document.createElement("a");
+                statusBoxWrapper.className = "statusBoxWrapper";
+                statusBoxWrapper.href = status.url;
+                statusBoxWrapper.target = "_blank";
+                statusBoxWrapper.rel = "noopener noreferrer";
+
                 var statusBox = document.createElement("section");
+                statusBoxWrapper.appendChild(statusBox);
+
                 statusBox.innerHTML = status.content;
 
                 if (status.media_attachments) {
@@ -132,7 +141,7 @@ const threadUnroll = {
                     });
                 }
 
-                mb.appendChild(statusBox);
+                mb.appendChild(statusBoxWrapper);
                 postCnt++;
             }
         });
