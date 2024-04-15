@@ -1,0 +1,52 @@
+{
+    "name": "Unroll Ninja",
+    "short_name": "Unroll Ninja",
+    "theme_color": "#2f0c7a",
+    "background_color": "#212121",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "https://unroll.ninja/",
+    "start_url": "https://unroll.ninja",
+    "categories ": [
+        "entertainment",
+        "social",
+        "utilities"
+    ],
+    "description": "A Browser App that allows you to unroll Mastodon threads into a single webpage.",
+    "icons": [
+        {
+            "src": "img/logo.svg",
+            "sizes": "any"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "screenshots/startpage_desktop_dark.png",
+            "sizes": "1440x810",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Unroll Ninja main page in dark mode on desktop"
+        },
+        {
+            "src": "screenshots/startpage_desktop_light.png",
+            "sizes": "1440x810",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Unroll Ninja main page in light mode on desktop"
+        },
+        {
+            "src": "screenshots/startpage_mobile_dark.png",
+            "sizes": "375x667",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Unroll Ninja main page in dark mode on mobile"
+        },
+        {
+            "src": "screenshots/startpage_mobile_dark.png",
+            "sizes": "375x667",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Unroll Ninja main page in light mode on mobile"
+        }
+    ]
+}
