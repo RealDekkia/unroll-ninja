@@ -182,6 +182,9 @@ const threadUnroll = {
                 }
 
                 if (status.card && status.card.image) {
+
+                    console.log(status);
+
                     var cardWrapper = document.createElement("a");
                     cardWrapper.className = "cardWrapper";
                     cardWrapper.href = status.card.url;
@@ -190,17 +193,29 @@ const threadUnroll = {
                     cardImage.src = status.card.image;
                     cardWrapper.appendChild(cardImage);
 
-                    var cardImageSubline = document.createElement("p");
-                    cardImageSubline.innerHTML = status.card.provider_name + " - " + new Date(status.card.published_at).toLocaleString();;
-                    cardWrapper.appendChild(cardImageSubline);
+                    var addedSubline = false;
+                    if (status.card.provider_name && status.card.published_at) {
+                        var cardImageSubline = document.createElement("p");
+                        cardImageSubline.innerHTML = status.card.provider_name + " - " + new Date(status.card.published_at).toLocaleString();;
+                        cardWrapper.appendChild(cardImageSubline);
+                        addedSubline = true;
+                    }
 
                     var cardHeadline = document.createElement("h4");
                     cardHeadline.innerHTML = status.card.title;
                     cardWrapper.appendChild(cardHeadline);
 
-                    var cardAutor = document.createElement("p");
-                    cardAutor.innerHTML = status.card.author_name;
-                    cardWrapper.appendChild(cardAutor);
+                    if (!addedSubline && status.card.description) {
+                        var cardDescription = document.createElement("p");
+                        cardDescription.innerHTML = status.card.description;
+                        cardWrapper.appendChild(cardDescription);
+                    }
+
+                    if (status.card.author_name) {
+                        var cardAutor = document.createElement("p");
+                        cardAutor.innerHTML = status.card.author_name;
+                        cardWrapper.appendChild(cardAutor);
+                    }
 
                     statusBox.appendChild(cardWrapper);
                 }
