@@ -182,9 +182,6 @@ const threadUnroll = {
                 }
 
                 if (status.card && status.card.image) {
-
-                    console.log(status);
-
                     var cardWrapper = document.createElement("a");
                     cardWrapper.className = "cardWrapper";
                     cardWrapper.href = status.card.url;
