@@ -10,7 +10,7 @@ const threadUnroll = {
 
             if (instanceUri && statusID) {
                 threadUnroll.initApi(instanceUri);
-                threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses);
+                threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID);
             } else {
                 document.location = "../";
             }
@@ -22,31 +22,56 @@ const threadUnroll = {
             api_user_token: ""
         });
     },
-    getAllStatuses: function (statusID, previousStatusArr, callback) {
-        if (previousStatusArr.length == 0) {
+    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID) {
+        if (previousStatusArr.length == 0 && findStart) {
             //Get status first before getting the ancestors
             threadUnroll.api.get("statuses/" + statusID, {}, function (data) {
                 previousStatusArr[0] = data;
-                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback);
+
+                //If the linked status is already the topmost, don't let it go upwards to begin with
+                var continueFindStart = findStart;
+                if (data.in_reply_to_id == null) continueFindStart = false;
+
+                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID);
             });
         } else {
             threadUnroll.api.get("statuses/" + statusID + "/context", {}, function (data) {
-                if (data.ancestors.length > 0 && previousStatusArr.length == 0) {
-                    //The given post wasn't the first one in the thread.
-                    //maybe get the previous ones as well: https://github.com/RealDekkia/unroll-ninja/issues/5
-                    //Or at least show a proper warning to the user
-                    window.alert("The Linked post isn't the first post in the thread.");
-                }
+                if (data.ancestors.length > 0 && findStart) {
+                    //Given url wasn't the start of the thread
+                    previousStatusArr = previousStatusArr.concat(data.ancestors);
+                    var firstAncestorId = data.ancestors[0].id;
 
-                if (data.descendants.length > 0) {
+                    if (data.ancestors[0].in_reply_to_id == null) {
+                        //Reached the top, go back down from where whe started from
+                        threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID);
+                    } else {
+                        //go up more
+                        threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID);
+                    }
+                }
+                else if (data.descendants.length > 0 && !findStart) {
                     //There's more where this came from. Go get it.
                     previousStatusArr = previousStatusArr.concat(data.descendants);
 
                     var lastDescendantId = data.descendants[data.descendants.length - 1].id;
-                    threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback);
+                    threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID);
                 } else {
+                    //Sort the resulting array based on the "in_reply_to_id"
+                    //get the first element where "in_reply_to_id" is null
+                    //And then work downwards by finding the one that replies to it
+                    var sortedStatusArr = [];
+                    previousStatusArr.forEach(status => {
+                        if (status.in_reply_to_id == null) {
+                            sortedStatusArr.push(status);
+                            return;
+                        }
+                    });
+                    while (sortedStatusArr.length < previousStatusArr.length) {
+                        var previousStatusId = sortedStatusArr[sortedStatusArr.length - 1].id;
+                        sortedStatusArr.push(previousStatusArr.find(e => e.in_reply_to_id === previousStatusId));
+                    }
                     //All done, call callback
-                    callback(previousStatusArr);
+                    callback(sortedStatusArr);
                 }
             });
         }
