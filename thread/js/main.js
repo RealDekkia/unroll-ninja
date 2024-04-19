@@ -66,9 +66,21 @@ const threadUnroll = {
                             return;
                         }
                     });
-                    while (sortedStatusArr.length < previousStatusArr.length) {
-                        var previousStatusId = sortedStatusArr[sortedStatusArr.length - 1].id;
-                        sortedStatusArr.push(previousStatusArr.find(e => e.in_reply_to_id === previousStatusId));
+
+                    console.log(previousStatusArr);
+
+                    var originalPoster = sortedStatusArr[0].account.id;
+                    var failedFinds = 0;
+
+                    while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
+                        var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
+                        if (previousStatus) {
+                            var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
+                            sortedStatusArr.push(foundStatus);
+                        } else {
+                            failedFinds++;
+                        }
+
                     }
                     //All done, call callback
                     callback(sortedStatusArr);
@@ -120,6 +132,7 @@ const threadUnroll = {
         //Print all posts
         var postCnt = 0;
         statusArr.forEach(status => {
+            if (status === undefined) return;
             //Only list posts from OP.
             if (statusArr[0].account.url == status.account.url) {
 
