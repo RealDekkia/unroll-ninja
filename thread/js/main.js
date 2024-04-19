@@ -67,8 +67,6 @@ const threadUnroll = {
                         }
                     });
 
-                    console.log(previousStatusArr);
-
                     var originalPoster = sortedStatusArr[0].account.id;
                     var failedFinds = 0;
 
@@ -89,7 +87,6 @@ const threadUnroll = {
         }
     },
     drawstatuses: function (statusArr) {
-        console.log(statusArr);
         var mb = document.getElementById("mainBody");
         mb.innerHTML = "";
 
