@@ -19,7 +19,9 @@ const threadUnroll = {
     initPageAsApi: function (instanceUri, statusID, callback) {
         if (instanceUri && statusID && callback) {
             threadUnroll.initApi(instanceUri);
-            threadUnroll.getAllStatuses(statusID, [], callback, true, statusID);
+            threadUnroll.getAllStatuses(statusID, [], function (x) {
+                threadUnroll.drawstatuses(x, callback);
+            }, true, statusID);
         }
     },
     initApi: function (instanceUri) {
@@ -92,45 +94,52 @@ const threadUnroll = {
             });
         }
     },
-    drawstatuses: function (statusArr) {
-        var mb = document.getElementById("mainBody");
-        mb.innerHTML = "";
-
-        //Draw header with info about the user and the thread
-        var userHeader = document.createElement("div");
-        userHeader.className = "userHeader";
-        userHeader.style.backgroundImage = "url(" + statusArr[0].account.header + ")";
-
-        var username = document.createElement("a");
-        username.className = "userName";
-        username.innerHTML = statusArr[0].account.display_name;
-        username.href = statusArr[0].account.url;
-        userHeader.appendChild(username);
-
-        if (statusArr[0].account.bot) {
-            var isBot = document.createElement("mark");
-            isBot.className = "userIsBot";
-            isBot.innerHTML = "Bot";
-            username.appendChild(isBot);
+    drawstatuses: function (statusArr, callback = false) {
+        var mb;
+        if (!callback) {
+            var mb = document.getElementById("mainBody");
+            mb.innerHTML = "";
+        } else {
+            mb = document.createElement("div");
         }
 
-        var userImg = document.createElement("img");
-        userImg.className = "userImage";
-        userImg.alt = "Profile picture of " + statusArr[0].account.display_name;
-        userImg.src = statusArr[0].account.avatar;
-        userHeader.appendChild(userImg);
+        if (!callback) {
+            //Draw header with info about the user and the thread
+            var userHeader = document.createElement("div");
+            userHeader.className = "userHeader";
+            userHeader.style.backgroundImage = "url(" + statusArr[0].account.header + ")";
 
-        var threadInfo = document.createElement("span");
+            var username = document.createElement("a");
+            username.className = "userName";
+            username.innerHTML = statusArr[0].account.display_name;
+            username.href = statusArr[0].account.url;
+            userHeader.appendChild(username);
 
-        var threadInfoPostCnt = document.createElement("span");
-        threadInfoPostCnt.id = "threadInfoPostCnt";
-        threadInfo.appendChild(threadInfoPostCnt);
+            if (statusArr[0].account.bot) {
+                var isBot = document.createElement("mark");
+                isBot.className = "userIsBot";
+                isBot.innerHTML = "Bot";
+                username.appendChild(isBot);
+            }
 
-        threadInfo.className = "threadInfo";
-        threadInfo.innerHTML += ", Created: " + new Date(statusArr[0].created_at).toLocaleString();
-        userHeader.appendChild(threadInfo);
+            var userImg = document.createElement("img");
+            userImg.className = "userImage";
+            userImg.alt = "Profile picture of " + statusArr[0].account.display_name;
+            userImg.src = statusArr[0].account.avatar;
+            userHeader.appendChild(userImg);
 
-        mb.appendChild(userHeader);
+            var threadInfo = document.createElement("span");
+
+            var threadInfoPostCnt = document.createElement("span");
+            threadInfoPostCnt.id = "threadInfoPostCnt";
+            threadInfo.appendChild(threadInfoPostCnt);
+
+            threadInfo.className = "threadInfo";
+            threadInfo.innerHTML += ", Created: " + new Date(statusArr[0].created_at).toLocaleString();
+            userHeader.appendChild(threadInfo);
+
+            mb.appendChild(userHeader);
+        }
 
         //Print all posts
         var postCnt = 0;
@@ -228,11 +237,17 @@ const threadUnroll = {
             }
         });
 
-        document.getElementById("threadInfoPostCnt").innerHTML = postCnt;
-        if (postCnt == 1) {
-            document.getElementById("threadInfoPostCnt").innerHTML += " Post";
-        } else {
-            document.getElementById("threadInfoPostCnt").innerHTML += " Posts";
+        if (!callback) {
+            document.getElementById("threadInfoPostCnt").innerHTML = postCnt;
+            if (postCnt == 1) {
+                document.getElementById("threadInfoPostCnt").innerHTML += " Post";
+            } else {
+                document.getElementById("threadInfoPostCnt").innerHTML += " Posts";
+            }
+        }
+
+        if (callback) {
+            callback(mb);
         }
 
     }
