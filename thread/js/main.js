@@ -16,11 +16,11 @@ const threadUnroll = {
             }
         }
     },
-    initPageAsApi: function (instanceUri, statusID, callback) {
+    initPageAsApi: function (instanceUri, statusID, title, callback) {
         if (instanceUri && statusID && callback) {
             threadUnroll.initApi(instanceUri);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
-                threadUnroll.drawstatuses(x, callback);
+                threadUnroll.drawstatuses(x, callback, title);
             }, true, statusID);
         }
     },
@@ -94,7 +94,7 @@ const threadUnroll = {
             });
         }
     },
-    drawstatuses: function (statusArr, callback = false) {
+    drawstatuses: function (statusArr, callback = false, title = undefined) {
         var mb;
         if (!callback) {
             var mb = document.getElementById("mainBody");
@@ -139,6 +139,11 @@ const threadUnroll = {
             userHeader.appendChild(threadInfo);
 
             mb.appendChild(userHeader);
+        } else if (title) {
+            var titleDom = document.createElement("h1");
+            titleDom.className = "title";
+            titleDom.innerHTML = title;
+            mb.appendChild(titleDom);
         }
 
         //Print all posts
