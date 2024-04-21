@@ -16,6 +16,12 @@ const threadUnroll = {
             }
         }
     },
+    initPageAsApi: function (instanceUri, statusID, callback) {
+        if (instanceUri && statusID && callback) {
+            threadUnroll.initApi(instanceUri);
+            threadUnroll.getAllStatuses(statusID, [], callback, true, statusID);
+        }
+    },
     initApi: function (instanceUri) {
         threadUnroll.api = new MastodonAPI({
             instance: instanceUri,
@@ -231,5 +237,3 @@ const threadUnroll = {
 
     }
 };
-
-threadUnroll.initPage();
