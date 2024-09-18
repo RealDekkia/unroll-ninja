@@ -36,7 +36,8 @@
   </div>
 
   <form id="urlInputForm" action="javascript:main.unrollButton();">
-    <input type="url" id="posturl" placeholder="Link to Mastodon Thread" pattern="^http(s)*:\/\/.*@.*\/\d*$"
+    <input type="url" id="posturl" placeholder="Link to Mastodon Thread"
+      pattern="(^http(s)*:\/\/.*@.*\/\d*$)|(^http(s)*:\/\/.*\/notes\/.*$)"
       title="Required Format: https://mastodon.example.org/@exampleUser/123" />
     <button id="startUnrollButton">Unroll</button>
     <banner id="underInputBanner"></banner>
