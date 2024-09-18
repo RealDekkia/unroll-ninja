@@ -1,5 +1,6 @@
 const threadUnroll = {
     api: undefined,
+    currentServer: undefined,
     initPage: function () {
         var params = new URLSearchParams(window.location.search);
         if (params.size <= 1) {
@@ -9,8 +10,8 @@ const threadUnroll = {
             var statusID = params.get("id");
 
             if (instanceUri && statusID) {
-                threadUnroll.initApi(instanceUri);
-                threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID);
+                threadUnroll.initApi(instanceUri, statusID);
+                //
             } else {
                 document.location = "../";
             }
@@ -22,11 +23,49 @@ const threadUnroll = {
             threadUnroll.getAllStatuses(statusID, [], callback, true, statusID);
         }
     },
-    initApi: function (instanceUri) {
+    initApi: function (instanceUri, statusID) {
+
         threadUnroll.api = new MastodonAPI({
             instance: instanceUri,
             api_user_token: ""
         });
+
+        //Find out what software the server is running
+        const serverCheckCnt = 2;
+        var serverCheckCur = 0;
+        var serverCheckDone = function () {
+            serverCheckCur++;
+            if (serverCheckCur >= serverCheckCnt) {
+                if (threadUnroll.currentServer) {
+                    console.log(threadUnroll.currentServer + " Detected");
+                    //threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID);
+                } else {
+                    console.warn("Unknown server");
+                    //TODO: show error-message about unrecognized server
+                }
+
+            }
+        }
+
+        //Mastodon-detection
+        threadUnroll.api.get("instance/", {}, function (data) {
+            console.log(data.version, data.error);
+            if (!data.error && data.version) {
+                //It's probably mastodon
+                threadUnroll.currentServer = "mastodon";
+            }
+            serverCheckDone();
+        });
+
+        //misskey-detection
+        posthelper.post(instanceUri + "/api/ping", "{}", function (data) {
+            if (!data.error && data.pong) {
+                //It's probably misskey
+                threadUnroll.currentServer = "misskey";
+            }
+            serverCheckDone();
+        })
+
     },
     getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID) {
         if (previousStatusArr.length == 0 && findStart) {
