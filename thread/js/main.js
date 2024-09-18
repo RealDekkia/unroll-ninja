@@ -81,7 +81,7 @@ const threadUnroll = {
                     threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
                 });
             } else if (threadUnroll.currentServer == "misskey") {
-                posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"9ybkbj8hn22l01ga\"}", function (data) {
+                posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
                     if (!data.error) {
                         console.log(data);
 
