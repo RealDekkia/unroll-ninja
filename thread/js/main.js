@@ -20,7 +20,7 @@ const threadUnroll = {
     initPageAsApi: function (instanceUri, statusID, callback) {
         if (instanceUri && statusID && callback) {
             threadUnroll.initApi(instanceUri);
-            threadUnroll.getAllStatuses(statusID, [], callback, true, statusID);
+            threadUnroll.getAllStatuses(statusID, [], callback, true, statusID, instanceUri);
         }
     },
     initApi: function (instanceUri, statusID) {
@@ -38,7 +38,7 @@ const threadUnroll = {
             if (serverCheckCur >= serverCheckCnt) {
                 if (threadUnroll.currentServer) {
                     console.log(threadUnroll.currentServer + " Detected");
-                    //threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID);
+                    threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID, instanceUri);
                 } else {
                     console.warn("Unknown server");
                     //TODO: show error-message about unrecognized server
@@ -67,68 +67,135 @@ const threadUnroll = {
         })
 
     },
-    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID) {
+    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri) {
         if (previousStatusArr.length == 0 && findStart) {
             //Get status first before getting the ancestors
-            threadUnroll.api.get("statuses/" + statusID, {}, function (data) {
-                previousStatusArr[0] = data;
+            if (threadUnroll.currentServer == "mastodon") {
+                threadUnroll.api.get("statuses/" + statusID, {}, function (data) {
+                    previousStatusArr[0] = data;
 
-                //If the linked status is already the topmost, don't let it go upwards to begin with
-                var continueFindStart = findStart;
-                if (data.in_reply_to_id == null) continueFindStart = false;
+                    //If the linked status is already the topmost, don't let it go upwards to begin with
+                    var continueFindStart = findStart;
+                    if (data.in_reply_to_id == null) continueFindStart = false;
 
-                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID);
-            });
+                    threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+                });
+            } else if (threadUnroll.currentServer == "misskey") {
+                posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"9ybkbj8hn22l01ga\"}", function (data) {
+                    if (!data.error) {
+                        console.log(data);
+
+                        /*
+                        Full json that can be processed by drawstatuses()
+                        {
+                            account: {
+                                header: "",
+                                display_name: "",
+                                url: "",
+                                bot: "",
+                                avatar: ""
+                            },
+                            created_at: "",
+                            content: "",
+                            media_attachments: {
+                                type: "",
+                                description: "",
+                                url: ""
+                            },
+                            card: {
+                                image: "",
+                                url: "",
+                                provider_name: "",
+                                published_at: "",
+                                title: "",
+                                description: "",
+                                author_name: "",
+                            }
+                        }
+                        */
+
+                        previousStatusArr[0] = {
+                            account: {
+                                header: "", //TODO
+                                display_name: data.user.username,
+                                url: "", //TODO
+                                bot: false, //TODO
+                                avatar: data.user.avatarUrl
+                            },
+                            created_at: data.createdAt,
+                            content: data.text,
+                            media_attachments: false, //TODO
+                            card: false //TODO
+                        };
+
+                        //If the linked status is already the topmost, don't let it go upwards to begin with
+                        var continueFindStart = findStart;
+                        if (data.replyId == null) continueFindStart = false;
+
+                        threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+                    }
+                })
+            }
+
         } else {
-            threadUnroll.api.get("statuses/" + statusID + "/context", {}, function (data) {
-                if (data.ancestors.length > 0 && findStart) {
-                    //Given url wasn't the start of the thread
-                    previousStatusArr = previousStatusArr.concat(data.ancestors);
-                    var firstAncestorId = data.ancestors[0].id;
+            if (threadUnroll.currentServer == "mastodon") {
+                threadUnroll.api.get("statuses/" + statusID + "/context", {}, function (data) {
+                    if (data.ancestors.length > 0 && findStart) {
+                        //Given url wasn't the start of the thread
+                        previousStatusArr = previousStatusArr.concat(data.ancestors);
+                        var firstAncestorId = data.ancestors[0].id;
 
-                    if (data.ancestors[0].in_reply_to_id == null) {
-                        //Reached the top, go back down from where whe started from
-                        threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID);
-                    } else {
-                        //go up more
-                        threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID);
-                    }
-                }
-                else if (data.descendants.length > 0 && !findStart) {
-                    //There's more where this came from. Go get it.
-                    previousStatusArr = previousStatusArr.concat(data.descendants);
-
-                    var lastDescendantId = data.descendants[data.descendants.length - 1].id;
-                    threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID);
-                } else {
-                    //Sort the resulting array based on the "in_reply_to_id"
-                    //get the first element where "in_reply_to_id" is null
-                    //And then work downwards by finding the one that replies to it
-                    var sortedStatusArr = [];
-                    previousStatusArr.forEach(status => {
-                        if (status.in_reply_to_id == null) {
-                            sortedStatusArr.push(status);
-                            return;
-                        }
-                    });
-
-                    var originalPoster = sortedStatusArr[0].account.id;
-                    var failedFinds = 0;
-
-                    while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
-                        var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
-                        if (previousStatus) {
-                            var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
-                            sortedStatusArr.push(foundStatus);
+                        if (data.ancestors[0].in_reply_to_id == null) {
+                            //Reached the top, go back down from where whe started from
+                            threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID, instanceUri);
                         } else {
-                            failedFinds++;
+                            //go up more
+                            threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID, instanceUri);
                         }
-
                     }
-                    //All done, call callback
-                    callback(sortedStatusArr);
-                }
-            });
+                    else if (data.descendants.length > 0 && !findStart) {
+                        //There's more where this came from. Go get it.
+                        previousStatusArr = previousStatusArr.concat(data.descendants);
+
+                        var lastDescendantId = data.descendants[data.descendants.length - 1].id;
+                        threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri);
+                    } else {
+                        //Sort the resulting array based on the "in_reply_to_id"
+                        //get the first element where "in_reply_to_id" is null
+                        //And then work downwards by finding the one that replies to it
+                        var sortedStatusArr = [];
+                        previousStatusArr.forEach(status => {
+                            if (status.in_reply_to_id == null) {
+                                sortedStatusArr.push(status);
+                                return;
+                            }
+                        });
+
+                        console.log(previousStatusArr);
+
+                        var originalPoster = sortedStatusArr[0].account.id;
+                        var failedFinds = 0;
+
+                        while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
+                            var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
+                            if (previousStatus) {
+                                var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
+                                sortedStatusArr.push(foundStatus);
+                            } else {
+                                failedFinds++;
+                            }
+
+                        }
+                        //All done, call callback
+                        callback(sortedStatusArr);
+                    }
+                });
+            } else if (threadUnroll.currentServer == "misskey") {
+                console.log(statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri);
+
+                //All done, call callback
+                callback(previousStatusArr);
+            }
         }
     },
     drawstatuses: function (statusArr) {
