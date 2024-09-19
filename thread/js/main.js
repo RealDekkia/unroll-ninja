@@ -56,14 +56,14 @@ const threadUnroll = {
         }
         */
 
-        console.log(misskeyNote);
+        //console.log(misskeyNote);
 
         var mstdn = {
             account: {
-                header: "", //TODO
                 display_name: misskeyNote.user.name,
                 url: instanceUri + "/@" + misskeyNote.user.username,
-                avatar: misskeyNote.user.avatarUrl
+                avatar: misskeyNote.user.avatarUrl,
+                id: misskeyNote.user.id
             },
             created_at: misskeyNote.createdAt,
             content: misskeyNote.text,
@@ -147,16 +147,22 @@ const threadUnroll = {
             } else if (threadUnroll.currentServer == "misskey") {
                 posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
                     if (!data.error) {
-                        //console.log(data);
                         previousStatusArr[0] = threadUnroll.misskeyToMastodonFormatConverter(data, instanceUri);
 
-                        //If the linked status is already the topmost, don't let it go upwards
-                        var continueFindStart = findStart;
-                        if (data.replyId == null || !data.reply) continueFindStart = false;
+                        //Get user-header
+                        posthelper.post(instanceUri + "/api/users/show", "{\"userId\":\"" + data.user.id + "\"}", function (data) {
+                            if (!data.error) {
 
-                        console.log("FS", continueFindStart);
+                                previousStatusArr[0].account.header = data.bannerUrl;
 
-                        threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+                                //If the linked status is already the topmost, don't let it go upwards
+                                var continueFindStart = findStart;
+                                if (data.replyId == null || !data.reply) continueFindStart = false;
+
+                                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+
+                            }
+                        });
                     }
                 });
             }
