@@ -22,8 +22,54 @@ const threadUnroll = {
             threadUnroll.initApi(instanceUri);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
                 threadUnroll.drawstatuses(x, callback, title);
-            }, true, statusID);
+            }, true, statusID, instanceUri);
         }
+    },
+    misskeyToMastodonFormatConverter: function (misskeyNote) {
+        /*
+        Full json that can be processed by drawstatuses()
+        {
+            account: {
+                header: "",
+                display_name: "",
+                url: "",
+                bot: "",
+                avatar: ""
+            },
+            created_at: "",
+            content: "",
+            media_attachments: {
+                type: "",
+                description: "",
+                url: ""
+            },
+            card: {
+                image: "",
+                url: "",
+                provider_name: "",
+                published_at: "",
+                title: "",
+                description: "",
+                author_name: "",
+            }
+        }
+        */
+
+        var mstdn = {
+            account: {
+                header: "", //TODO
+                display_name: misskeyNote.user.username,
+                url: "", //TODO
+                bot: false, //TODO
+                avatar: misskeyNote.user.avatarUrl
+            },
+            created_at: misskeyNote.createdAt,
+            content: misskeyNote.text,
+            media_attachments: false, //TODO
+            card: false //TODO
+        };
+
+        return mstdn;
     },
     initApi: function (instanceUri, statusID) {
 
@@ -85,58 +131,20 @@ const threadUnroll = {
             } else if (threadUnroll.currentServer == "misskey") {
                 posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
                     if (!data.error) {
+
                         console.log(data);
 
-                        /*
-                        Full json that can be processed by drawstatuses()
-                        {
-                            account: {
-                                header: "",
-                                display_name: "",
-                                url: "",
-                                bot: "",
-                                avatar: ""
-                            },
-                            created_at: "",
-                            content: "",
-                            media_attachments: {
-                                type: "",
-                                description: "",
-                                url: ""
-                            },
-                            card: {
-                                image: "",
-                                url: "",
-                                provider_name: "",
-                                published_at: "",
-                                title: "",
-                                description: "",
-                                author_name: "",
-                            }
-                        }
-                        */
+                        previousStatusArr[0] = threadUnroll.misskeyToMastodonFormatConverter(data);
 
-                        previousStatusArr[0] = {
-                            account: {
-                                header: "", //TODO
-                                display_name: data.user.username,
-                                url: "", //TODO
-                                bot: false, //TODO
-                                avatar: data.user.avatarUrl
-                            },
-                            created_at: data.createdAt,
-                            content: data.text,
-                            media_attachments: false, //TODO
-                            card: false //TODO
-                        };
-
-                        //If the linked status is already the topmost, don't let it go upwards to begin with
+                        //If the linked status is already the topmost, don't let it go upwards
                         var continueFindStart = findStart;
-                        if (data.replyId == null) continueFindStart = false;
+                        if (data.replyId == null || !data.reply) continueFindStart = false;
+
+                        console.log("FS", continueFindStart);
 
                         threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
                     }
-                })
+                });
             }
 
         } else {
@@ -193,10 +201,33 @@ const threadUnroll = {
                     }
                 });
             } else if (threadUnroll.currentServer == "misskey") {
-                console.log(statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri);
+                //Setting the limit to 1, because a traditional thread
+                //(in my opinion) is a "linked list" of posts. 
+                //api/notes/children only lets me get one generation of children at a time
+                posthelper.post(instanceUri + "/api/notes/children", "{\"noteId\":\"" + statusID + "\",\"limit\":1}", function (data) {
+                    if (!data.error) {
+                        console.log(data);
+                        if (data.length > 0 && findStart) {
+                            //Given url wasn't the start of the thread
+                            //TODO: find start of thread
+                        }
+                        else if (data.length > 0 && !findStart) {
+                            //There's more where this came from. Go get it.
+                            previousStatusArr = previousStatusArr.concat(threadUnroll.misskeyToMastodonFormatConverter(data[0]));
+                            var lastDescendantId = data[0].id;
+                            threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri);
+                        } else {
+                            //TODO
+                            //Sort the resulting array based on the "in_reply_to_id"
+                            //get the first element where "in_reply_to_id" is null
+                            //And then work downwards by finding the one that replies to it
 
-                //All done, call callback
-                callback(previousStatusArr);
+
+                            //All done, call callback
+                            callback(previousStatusArr);
+                        }
+                    }
+                });
             }
         }
     },
