@@ -25,7 +25,7 @@ const threadUnroll = {
             }, true, statusID, instanceUri);
         }
     },
-    misskeyToMastodonFormatConverter: function (misskeyNote) {
+    misskeyToMastodonFormatConverter: function (misskeyNote, instanceUri) {
         /*
         Full json that can be processed by drawstatuses()
         {
@@ -51,23 +51,39 @@ const threadUnroll = {
                 title: "",
                 description: "",
                 author_name: "",
-            }
+            },
+            url:""
         }
         */
+
+        console.log(misskeyNote);
 
         var mstdn = {
             account: {
                 header: "", //TODO
-                display_name: misskeyNote.user.username,
-                url: "", //TODO
-                bot: false, //TODO
+                display_name: misskeyNote.user.name,
+                url: instanceUri + "/@" + misskeyNote.user.username,
                 avatar: misskeyNote.user.avatarUrl
             },
             created_at: misskeyNote.createdAt,
             content: misskeyNote.text,
-            media_attachments: false, //TODO
-            card: false //TODO
+            media_attachments: false,
+            card: false, //Mastodon has them in the API, misskey doesn't
+            url: instanceUri + "/notes/" + misskeyNote.id
         };
+
+        if (misskeyNote.fileIds.length > 0) {
+            //Handle attached files
+            mstdn.media_attachments = [];
+            misskeyNote.files.forEach(misskeyFile => {
+                var mastodonAttachment = {
+                    url: misskeyFile.url,
+                    type: "image", //TODO: detect file type
+                    description: misskeyFile.comment
+                }
+                mstdn.media_attachments.push(mastodonAttachment);
+            })
+        }
 
         return mstdn;
     },
@@ -131,10 +147,8 @@ const threadUnroll = {
             } else if (threadUnroll.currentServer == "misskey") {
                 posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
                     if (!data.error) {
-
-                        console.log(data);
-
-                        previousStatusArr[0] = threadUnroll.misskeyToMastodonFormatConverter(data);
+                        //console.log(data);
+                        previousStatusArr[0] = threadUnroll.misskeyToMastodonFormatConverter(data, instanceUri);
 
                         //If the linked status is already the topmost, don't let it go upwards
                         var continueFindStart = findStart;
@@ -206,14 +220,14 @@ const threadUnroll = {
                 //api/notes/children only lets me get one generation of children at a time
                 posthelper.post(instanceUri + "/api/notes/children", "{\"noteId\":\"" + statusID + "\",\"limit\":1}", function (data) {
                     if (!data.error) {
-                        console.log(data);
+                        //console.log(data);
                         if (data.length > 0 && findStart) {
                             //Given url wasn't the start of the thread
                             //TODO: find start of thread
                         }
                         else if (data.length > 0 && !findStart) {
                             //There's more where this came from. Go get it.
-                            previousStatusArr = previousStatusArr.concat(threadUnroll.misskeyToMastodonFormatConverter(data[0]));
+                            previousStatusArr = previousStatusArr.concat(threadUnroll.misskeyToMastodonFormatConverter(data[0], instanceUri));
                             var lastDescendantId = data[0].id;
                             threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri);
                         } else {
