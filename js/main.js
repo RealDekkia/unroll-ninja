@@ -9,9 +9,10 @@ var main = {
         var postUrl = document.getElementById("posturl").value;
 
         //plausibility check
-        var urlRegex = /^http(s)*:\/\/.*@.*\/\d*$/;
-        if (urlRegex.test(postUrl)) {
+        var mastodonRegex = /^http(s)*:\/\/.*@.*\/\d*$/;
+        var misskeyRegex = /^http(s)*:\/\/.*\/notes\/.*$/;
 
+        if (mastodonRegex.test(postUrl)) {
             var splitUriRegex = /^(http(?:s)*:\/\/.*?)\/(?:deck\/)*(@.*)\/(\d*$)/;
             //I'm rather proud of this regex.
             //It extracts the server domain, the username and the post ID.
@@ -24,7 +25,17 @@ var main = {
             //Send to /thread for display
             document.location = "thread?uri=" + encodeURIComponent(serverDomain) + "&id=" + encodeURIComponent(postID);
 
-        } else {
+        } else if (misskeyRegex.test(postUrl)) {
+            var splitUriRegex = /^(http(?:s)*:\/\/.*?)(\/notes\/)(.*$)/;
+
+            var regexRes = splitUriRegex.exec(postUrl);
+            var serverDomain = regexRes[1];
+            var postID = regexRes[3];
+
+            //Send to /thread for display
+            document.location = "thread?uri=" + encodeURIComponent(serverDomain) + "&id=" + encodeURIComponent(postID);
+        }
+        else {
             //Normally this should never show up
             //Because the browser is supposed to catch this.
             //But let's better be save then sorry.

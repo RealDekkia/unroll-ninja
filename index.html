@@ -36,7 +36,8 @@
   </div>
 
   <form id="urlInputForm" action="javascript:main.unrollButton();">
-    <input type="url" id="posturl" placeholder="Link to Mastodon Thread" pattern="^http(s)*:\/\/.*@.*\/\d*$"
+    <input type="url" id="posturl" placeholder="Link to Mastodon Thread"
+      pattern="(^http(s)*:\/\/.*@.*\/\d*$)|(^http(s)*:\/\/.*\/notes\/.*$)"
       title="Required Format: https://mastodon.example.org/@exampleUser/123" />
     <button id="startUnrollButton">Unroll</button>
     <banner id="underInputBanner"></banner>
@@ -46,7 +47,9 @@
     <h4>QA:</h4>
     <h5>What is this?</h5>
     <p>This is a browser app that displays a Mastodon thread of your choosing on one convenient page.</p>
-    <h5>Does it work with fedi-servers that aren't Mastodon?</h5>
+    <h5>Doses it Support misskey?</h5>
+    <p>I'm working on it. Right now the implementation is very rough.</p>
+    <h5>Does it work with fedi-servers that aren't Mastodon or Misskey?</h5>
     <p>Probably not. Maybe in the future.</p>
     <h5>Why not?</h5>
     <p>Because I'm using the Mastodon API to get the data.</p>

@@ -1,5 +1,6 @@
 const threadUnroll = {
     api: undefined,
+    currentServer: undefined,
     initPage: function () {
         var params = new URLSearchParams(window.location.search);
         if (params.size <= 1) {
@@ -9,8 +10,8 @@ const threadUnroll = {
             var statusID = params.get("id");
 
             if (instanceUri && statusID) {
-                threadUnroll.initApi(instanceUri);
-                threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID);
+                threadUnroll.initApi(instanceUri, statusID);
+                //
             } else {
                 document.location = "../";
             }
@@ -21,77 +22,233 @@ const threadUnroll = {
             threadUnroll.initApi(instanceUri);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
                 threadUnroll.drawstatuses(x, callback, title);
-            }, true, statusID);
+            }, true, statusID, instanceUri);
         }
     },
-    initApi: function (instanceUri) {
+    misskeyToMastodonFormatConverter: function (misskeyNote, instanceUri) {
+        /*
+        Full json that can be processed by drawstatuses()
+        {
+            account: {
+                header: "",
+                display_name: "",
+                url: "",
+                bot: "",
+                avatar: ""
+            },
+            created_at: "",
+            content: "",
+            media_attachments: {
+                type: "",
+                description: "",
+                url: ""
+            },
+            card: {
+                image: "",
+                url: "",
+                provider_name: "",
+                published_at: "",
+                title: "",
+                description: "",
+                author_name: "",
+            },
+            url:""
+        }
+        */
+
+        //console.log(misskeyNote);
+
+        var mstdn = {
+            account: {
+                display_name: misskeyNote.user.name,
+                url: instanceUri + "/@" + misskeyNote.user.username,
+                avatar: misskeyNote.user.avatarUrl,
+                id: misskeyNote.user.id
+            },
+            created_at: misskeyNote.createdAt,
+            content: misskeyNote.text,
+            media_attachments: false,
+            card: false, //Mastodon has them in the API, misskey doesn't
+            url: instanceUri + "/notes/" + misskeyNote.id
+        };
+
+        if (misskeyNote.fileIds.length > 0) {
+            //Handle attached files
+            mstdn.media_attachments = [];
+            misskeyNote.files.forEach(misskeyFile => {
+                var mastodonAttachment = {
+                    url: misskeyFile.url,
+                    type: "image", //TODO: detect file type
+                    description: misskeyFile.comment
+                }
+                mstdn.media_attachments.push(mastodonAttachment);
+            })
+        }
+
+        return mstdn;
+    },
+    initApi: function (instanceUri, statusID) {
+
         threadUnroll.api = new MastodonAPI({
             instance: instanceUri,
             api_user_token: ""
         });
+
+        //Find out what software the server is running
+        const serverCheckCnt = 2;
+        var serverCheckCur = 0;
+        var serverCheckDone = function () {
+            serverCheckCur++;
+            if (serverCheckCur >= serverCheckCnt) {
+                if (threadUnroll.currentServer) {
+                    console.log(threadUnroll.currentServer + " Detected");
+                    threadUnroll.getAllStatuses(statusID, [], threadUnroll.drawstatuses, true, statusID, instanceUri);
+                } else {
+                    console.warn("Unknown server");
+                    //TODO: show error-message about unrecognized server
+                }
+
+            }
+        }
+
+        //Mastodon-detection
+        threadUnroll.api.get("instance/", {}, function (data) {
+            console.log(data.version, data.error);
+            if (!data.error && data.version) {
+                //It's probably mastodon
+                threadUnroll.currentServer = "mastodon";
+            }
+            serverCheckDone();
+        });
+
+        //misskey-detection
+        posthelper.post(instanceUri + "/api/ping", "{}", function (data) {
+            if (!data.error && data.pong) {
+                //It's probably misskey
+                threadUnroll.currentServer = "misskey";
+            }
+            serverCheckDone();
+        })
+
     },
-    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID) {
+    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri) {
         if (previousStatusArr.length == 0 && findStart) {
             //Get status first before getting the ancestors
-            threadUnroll.api.get("statuses/" + statusID, {}, function (data) {
-                previousStatusArr[0] = data;
+            if (threadUnroll.currentServer == "mastodon") {
+                threadUnroll.api.get("statuses/" + statusID, {}, function (data) {
+                    previousStatusArr[0] = data;
 
-                //If the linked status is already the topmost, don't let it go upwards to begin with
-                var continueFindStart = findStart;
-                if (data.in_reply_to_id == null) continueFindStart = false;
+                    //If the linked status is already the topmost, don't let it go upwards to begin with
+                    var continueFindStart = findStart;
+                    if (data.in_reply_to_id == null) continueFindStart = false;
 
-                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID);
-            });
+                    threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+                });
+            } else if (threadUnroll.currentServer == "misskey") {
+                posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
+                    if (!data.error) {
+                        previousStatusArr[0] = threadUnroll.misskeyToMastodonFormatConverter(data, instanceUri);
+
+                        //Get user-header
+                        posthelper.post(instanceUri + "/api/users/show", "{\"userId\":\"" + data.user.id + "\"}", function (data) {
+                            if (!data.error) {
+
+                                previousStatusArr[0].account.header = data.bannerUrl;
+
+                                //If the linked status is already the topmost, don't let it go upwards
+                                var continueFindStart = findStart;
+                                if (data.replyId == null || !data.reply) continueFindStart = false;
+
+                                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+
+                            }
+                        });
+                    }
+                });
+            }
+
         } else {
-            threadUnroll.api.get("statuses/" + statusID + "/context", {}, function (data) {
-                if (data.ancestors.length > 0 && findStart) {
-                    //Given url wasn't the start of the thread
-                    previousStatusArr = previousStatusArr.concat(data.ancestors);
-                    var firstAncestorId = data.ancestors[0].id;
+            if (threadUnroll.currentServer == "mastodon") {
+                threadUnroll.api.get("statuses/" + statusID + "/context", {}, function (data) {
+                    if (data.ancestors.length > 0 && findStart) {
+                        //Given url wasn't the start of the thread
+                        previousStatusArr = previousStatusArr.concat(data.ancestors);
+                        var firstAncestorId = data.ancestors[0].id;
 
-                    if (data.ancestors[0].in_reply_to_id == null) {
-                        //Reached the top, go back down from where whe started from
-                        threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID);
-                    } else {
-                        //go up more
-                        threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID);
-                    }
-                }
-                else if (data.descendants.length > 0 && !findStart) {
-                    //There's more where this came from. Go get it.
-                    previousStatusArr = previousStatusArr.concat(data.descendants);
-
-                    var lastDescendantId = data.descendants[data.descendants.length - 1].id;
-                    threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID);
-                } else {
-                    //Sort the resulting array based on the "in_reply_to_id"
-                    //get the first element where "in_reply_to_id" is null
-                    //And then work downwards by finding the one that replies to it
-                    var sortedStatusArr = [];
-                    previousStatusArr.forEach(status => {
-                        if (status.in_reply_to_id == null) {
-                            sortedStatusArr.push(status);
-                            return;
-                        }
-                    });
-
-                    var originalPoster = sortedStatusArr[0].account.id;
-                    var failedFinds = 0;
-
-                    while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
-                        var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
-                        if (previousStatus) {
-                            var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
-                            sortedStatusArr.push(foundStatus);
+                        if (data.ancestors[0].in_reply_to_id == null) {
+                            //Reached the top, go back down from where whe started from
+                            threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID, instanceUri);
                         } else {
-                            failedFinds++;
+                            //go up more
+                            threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID, instanceUri);
                         }
-
                     }
-                    //All done, call callback
-                    callback(sortedStatusArr);
-                }
-            });
+                    else if (data.descendants.length > 0 && !findStart) {
+                        //There's more where this came from. Go get it.
+                        previousStatusArr = previousStatusArr.concat(data.descendants);
+
+                        var lastDescendantId = data.descendants[data.descendants.length - 1].id;
+                        threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri);
+                    } else {
+                        //Sort the resulting array based on the "in_reply_to_id"
+                        //get the first element where "in_reply_to_id" is null
+                        //And then work downwards by finding the one that replies to it
+                        var sortedStatusArr = [];
+                        previousStatusArr.forEach(status => {
+                            if (status.in_reply_to_id == null) {
+                                sortedStatusArr.push(status);
+                                return;
+                            }
+                        });
+
+                        console.log(previousStatusArr);
+
+                        var originalPoster = sortedStatusArr[0].account.id;
+                        var failedFinds = 0;
+
+                        while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
+                            var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
+                            if (previousStatus) {
+                                var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
+                                sortedStatusArr.push(foundStatus);
+                            } else {
+                                failedFinds++;
+                            }
+
+                        }
+                        //All done, call callback
+                        callback(sortedStatusArr);
+                    }
+                });
+            } else if (threadUnroll.currentServer == "misskey") {
+                //Setting the limit to 1, because a traditional thread
+                //(in my opinion) is a "linked list" of posts. 
+                //api/notes/children only lets me get one generation of children at a time
+                posthelper.post(instanceUri + "/api/notes/children", "{\"noteId\":\"" + statusID + "\",\"limit\":1}", function (data) {
+                    if (!data.error) {
+                        //console.log(data);
+                        if (data.length > 0 && findStart) {
+                            //Given url wasn't the start of the thread
+                            //TODO: find start of thread
+                        }
+                        else if (data.length > 0 && !findStart) {
+                            //There's more where this came from. Go get it.
+                            previousStatusArr = previousStatusArr.concat(threadUnroll.misskeyToMastodonFormatConverter(data[0], instanceUri));
+                            var lastDescendantId = data[0].id;
+                            threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri);
+                        } else {
+                            //TODO
+                            //Sort the resulting array based on the "in_reply_to_id"
+                            //get the first element where "in_reply_to_id" is null
+                            //And then work downwards by finding the one that replies to it
+
+
+                            //All done, call callback
+                            callback(previousStatusArr);
+                        }
+                    }
+                });
+            }
         }
     },
     drawstatuses: function (statusArr, callback = false, title = undefined) {
