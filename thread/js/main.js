@@ -257,3 +257,8 @@ const threadUnroll = {
 
     }
 };
+
+try {
+    exports.initPageAsApi = threadUnroll.initPageAsApi;
+}
+catch (error) { }
