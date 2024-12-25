@@ -1,3 +1,8 @@
+if (typeof module !== "undefined") {
+    var x = require('../../../../_builder/node_modules/xmlhttprequest').XMLHttpRequest;
+    XMLHttpRequest = x;
+}
+
 const posthelper = {
     post: function (uri, body, callback) {
         //based on https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send#example_post
@@ -21,3 +26,10 @@ const posthelper = {
         xhr.send(body);
     }
 }
+
+try {
+    if (typeof module !== "undefined") {
+        exports.post = posthelper.post;
+    }
+}
+catch (error) { }

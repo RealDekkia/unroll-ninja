@@ -1,3 +1,11 @@
+if (typeof module !== "undefined") {
+    var api = require('../../lib/mastodon.js/mastodon');
+    MastodonAPI = api;
+
+    var ph = require('../../thread/js/post-helper');
+    posthelper = ph;
+}
+
 const threadUnroll = {
     api: undefined,
     currentServer: undefined,
@@ -416,6 +424,11 @@ const threadUnroll = {
 };
 
 try {
-    exports.initPageAsApi = threadUnroll.initPageAsApi;
+    if (typeof module !== "undefined") {
+        exports.initPageAsApi = threadUnroll.initPageAsApi;
+        exports.initApi = threadUnroll.initApi;
+        exports.getAllStatuses = threadUnroll.getAllStatuses;
+        exports.drawstatuses = threadUnroll.drawstatuses;
+    }
 }
 catch (error) { }
