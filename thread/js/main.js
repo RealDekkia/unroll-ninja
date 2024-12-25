@@ -1,9 +1,14 @@
+var fakeIndexDom;
 if (typeof module !== "undefined") {
     var api = require('../../lib/mastodon.js/mastodon');
     MastodonAPI = api;
 
     var ph = require('../../thread/js/post-helper');
     posthelper = ph;
+
+    const jsdom = require('../../../../_builder/node_modules/jsdom');
+    const { JSDOM } = jsdom;
+    fakeIndexDom = new JSDOM('');
 }
 
 const threadUnroll = {
@@ -27,7 +32,13 @@ const threadUnroll = {
     },
     initPageAsApi: function (instanceUri, statusID, title, callback) {
         if (instanceUri && statusID && callback) {
+
+            if (typeof module !== "undefined") {
+                threadUnroll.currentServer = 'mastodon';
+            }
+
             threadUnroll.initApi(instanceUri);
+            console.log(statusID);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
                 threadUnroll.drawstatuses(x, callback, title);
             }, true, statusID, instanceUri);
@@ -150,6 +161,8 @@ const threadUnroll = {
                     var continueFindStart = findStart;
                     if (data.in_reply_to_id == null) continueFindStart = false;
 
+
+
                     threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
                 });
             } else if (threadUnroll.currentServer == "misskey") {
@@ -209,7 +222,7 @@ const threadUnroll = {
                             }
                         });
 
-                        console.log(previousStatusArr);
+                        //console.log(previousStatusArr);
 
                         var originalPoster = sortedStatusArr[0].account.id;
                         var failedFinds = 0;
@@ -260,6 +273,12 @@ const threadUnroll = {
         }
     },
     drawstatuses: function (statusArr, callback = false, title = undefined) {
+
+        if (typeof module !== "undefined") {
+            document = fakeIndexDom.window.document;
+            //fakeIndexDom
+        }
+
         var mb;
         if (!callback) {
             var mb = document.getElementById("mainBody");
