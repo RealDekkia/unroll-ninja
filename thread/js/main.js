@@ -30,7 +30,7 @@ const threadUnroll = {
             }
         }
     },
-    initPageAsApi: function (instanceUri, statusID, title, callback) {
+    initPageAsApi: function (instanceUri, statusID, title, callback, addhref = true) {
         if (instanceUri && statusID && callback) {
 
             if (typeof module !== "undefined") {
@@ -40,7 +40,7 @@ const threadUnroll = {
             threadUnroll.initApi(instanceUri);
             console.log(statusID);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
-                threadUnroll.drawstatuses(x, callback, title);
+                threadUnroll.drawstatuses(x, callback, title, addhref);
             }, true, statusID, instanceUri);
         }
     },
@@ -272,7 +272,7 @@ const threadUnroll = {
             }
         }
     },
-    drawstatuses: function (statusArr, callback = false, title = undefined) {
+    drawstatuses: function (statusArr, callback = false, title = undefined, addhref = true) {
 
         if (typeof module !== "undefined") {
             document = fakeIndexDom.window.document;
@@ -339,7 +339,7 @@ const threadUnroll = {
 
                 var statusBoxWrapper = document.createElement("a");
                 statusBoxWrapper.className = "statusBoxWrapper";
-                statusBoxWrapper.href = status.url;
+                if (addhref) statusBoxWrapper.href = status.url;
                 statusBoxWrapper.target = "_blank";
                 statusBoxWrapper.rel = "noopener noreferrer";
 
