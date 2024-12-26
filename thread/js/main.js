@@ -436,7 +436,7 @@ const threadUnroll = {
         }
 
         if (callback) {
-            callback(mb);
+            callback(mb, statusArr);
         }
 
     }
