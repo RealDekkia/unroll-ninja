@@ -427,10 +427,22 @@ const threadUnroll = {
                 statusBoxTag.className = "statusBoxTag";
                 if (lastStatusDate == undefined || lastStatusDate.getDate() != curStatusDate.getDate()) {
                     //Write date and time
-                    statusBoxTag.innerHTML = curStatusDate.toLocaleString();
+                    if (typeof module !== "undefined") {
+                        statusBoxTag.innerHTML = curStatusDate.getFullYear() + "-" + threadUnroll.padZero(curStatusDate.getMonth() + 1) + "-" + threadUnroll.padZero(curStatusDate.getDate()) + ", " +
+                            threadUnroll.padZero(curStatusDate.getHours()) + ":" + threadUnroll.padZero(curStatusDate.getMinutes()) + ":" + threadUnroll.padZero(curStatusDate.getSeconds());
+                    }
+                    else {
+                        statusBoxTag.innerHTML = curStatusDate.toLocaleString();
+                    }
+
                 } else {
                     //Write only time
-                    statusBoxTag.innerHTML = curStatusDate.toLocaleTimeString();
+                    if (typeof module !== "undefined") {
+                        statusBoxTag.innerHTML = threadUnroll.padZero(curStatusDate.getHours()) + ":" + threadUnroll.padZero(curStatusDate.getMinutes()) + ":" + threadUnroll.padZero(curStatusDate.getSeconds());
+                    }
+                    else {
+                        statusBoxTag.innerHTML = curStatusDate.toLocaleTimeString();
+                    }
                 }
                 lastStatusDate = curStatusDate;
                 mb.appendChild(statusBoxTag);
@@ -453,6 +465,12 @@ const threadUnroll = {
             callback(mb, statusArr);
         }
 
+    },
+    padZero: function (num) {
+        if (num < 10) {
+            return "0" + num;
+        }
+        return num;
     }
 };
 
