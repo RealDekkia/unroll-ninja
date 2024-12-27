@@ -332,6 +332,7 @@ const threadUnroll = {
 
         //Print all posts
         var postCnt = 0;
+        var lastStatusDate = undefined;
         statusArr.forEach(status => {
             if (status === undefined) return;
             //Only list posts from OP.
@@ -420,6 +421,19 @@ const threadUnroll = {
 
                     statusBox.appendChild(cardWrapper);
                 }
+
+                var curStatusDate = new Date(status.created_at);
+                var statusBoxTag = document.createElement("p");
+                statusBoxTag.className = "statusBoxTag";
+                if (lastStatusDate == undefined || lastStatusDate.getDate() != curStatusDate.getDate()) {
+                    //Write date and time
+                    statusBoxTag.innerHTML = curStatusDate.toLocaleString();
+                } else {
+                    //Write only time
+                    statusBoxTag.innerHTML = curStatusDate.toLocaleTimeString();
+                }
+                lastStatusDate = curStatusDate;
+                mb.appendChild(statusBoxTag);
 
                 mb.appendChild(statusBoxWrapper);
                 postCnt++;
