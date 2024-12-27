@@ -41,7 +41,7 @@ const threadUnroll = {
             console.log(statusID);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
                 threadUnroll.drawstatuses(x, callback, title, addhref);
-            }, true, statusID, instanceUri, statusBlocklist, brokenThreadContinue);
+            }, true, statusID, instanceUri, statusBlocklist, brokenThreadContinue, 0);
         }
     },
     misskeyToMastodonFormatConverter: function (misskeyNote, instanceUri) {
@@ -150,20 +150,24 @@ const threadUnroll = {
         })
 
     },
-    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri, statusBlocklist = [], brokenThreadContinue = []) {
-        if (previousStatusArr.length == 0 && findStart) {
+    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri, statusBlocklist = [], brokenThreadContinue = [], brokenThreadIndex = 0) {
+        if ((previousStatusArr.length == 0 || (brokenThreadContinue.length >= 1 && brokenThreadIndex >= 1)) && findStart) {
             //Get status first before getting the ancestors
             if (threadUnroll.currentServer == "mastodon") {
                 threadUnroll.api.get("statuses/" + statusID, {}, function (data) {
-                    previousStatusArr[0] = data;
+                    if (previousStatusArr.length == 0) {
+                        previousStatusArr[0] = data;
+                    } else if (brokenThreadContinue.length >= 1 && brokenThreadIndex >= 1) {
+                        data.in_reply_to_id = brokenThreadContinue[brokenThreadIndex - 1].to;
+                        console.log(data.id, brokenThreadContinue[brokenThreadIndex - 1]);
+                        previousStatusArr.push(data);
+                    }
 
-                    //If the linked status is already the topmost, don't let it go upwards to begin with
+                    //If the linked status is already the topmost (or part of broken-thread-fixing), don't let it go upwards to begin with
                     var continueFindStart = findStart;
-                    if (data.in_reply_to_id == null) continueFindStart = false;
+                    if (data.in_reply_to_id == null || (brokenThreadContinue.length >= 1 && brokenThreadIndex >= 1)) continueFindStart = false;
 
-
-
-                    threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
+                    threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue, brokenThreadIndex);
                 });
             } else if (threadUnroll.currentServer == "misskey") {
                 posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
@@ -180,7 +184,7 @@ const threadUnroll = {
                                 var continueFindStart = findStart;
                                 if (data.replyId == null || !data.reply) continueFindStart = false;
 
-                                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
+                                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue, brokenThreadIndex);
 
                             }
                         });
@@ -209,8 +213,14 @@ const threadUnroll = {
                         previousStatusArr = previousStatusArr.concat(data.descendants);
 
                         var lastDescendantId = data.descendants[data.descendants.length - 1].id;
-                        threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
-                    } else {
+                        threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue, brokenThreadIndex);
+                    } else if (data.descendants.length <= 0 && !findStart && brokenThreadContinue.length > brokenThreadIndex) {
+                        //get and Append posts from broken threads
+                        var nextId = brokenThreadContinue[brokenThreadIndex].append;
+                        brokenThreadIndex++;
+                        threadUnroll.getAllStatuses(nextId, previousStatusArr, callback, true, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue, brokenThreadIndex);
+                    }
+                    else {
                         //Sort the resulting array based on the "in_reply_to_id"
                         //get the first element where "in_reply_to_id" is null
                         //And then work downwards by finding the one that replies to it
@@ -218,18 +228,19 @@ const threadUnroll = {
                         previousStatusArr.forEach(status => {
                             if (status.in_reply_to_id == null) {
                                 sortedStatusArr.push(status);
-                                return;
                             }
                         });
+
 
                         var originalPoster = sortedStatusArr[0].account.id;
                         var failedFinds = 0;
                         while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
                             var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
                             if (previousStatus) {
-                                var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
+                                var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster && !statusBlocklist.includes(e.id));
                                 if (foundStatus) {
                                     if (statusBlocklist.includes(foundStatus.id)) {
+                                        console.log(foundStatus);
                                         foundStatus.blocked = true;
                                     } else {
                                         foundStatus.blocked = false;
