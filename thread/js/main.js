@@ -30,7 +30,7 @@ const threadUnroll = {
             }
         }
     },
-    initPageAsApi: function (instanceUri, statusID, title, callback, addhref = true) {
+    initPageAsApi: function (instanceUri, statusID, title, callback, addhref = true, statusBlocklist = [], brokenThreadContinue = []) {
         if (instanceUri && statusID && callback) {
 
             if (typeof module !== "undefined") {
@@ -41,7 +41,7 @@ const threadUnroll = {
             console.log(statusID);
             threadUnroll.getAllStatuses(statusID, [], function (x) {
                 threadUnroll.drawstatuses(x, callback, title, addhref);
-            }, true, statusID, instanceUri);
+            }, true, statusID, instanceUri, statusBlocklist, brokenThreadContinue);
         }
     },
     misskeyToMastodonFormatConverter: function (misskeyNote, instanceUri) {
@@ -150,7 +150,7 @@ const threadUnroll = {
         })
 
     },
-    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri) {
+    getAllStatuses: function (statusID, previousStatusArr, callback, findStart, initStatusID, instanceUri, statusBlocklist = [], brokenThreadContinue = []) {
         if (previousStatusArr.length == 0 && findStart) {
             //Get status first before getting the ancestors
             if (threadUnroll.currentServer == "mastodon") {
@@ -163,7 +163,7 @@ const threadUnroll = {
 
 
 
-                    threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+                    threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
                 });
             } else if (threadUnroll.currentServer == "misskey") {
                 posthelper.post(instanceUri + "/api/notes/show", "{\"noteId\":\"" + statusID + "\"}", function (data) {
@@ -180,7 +180,7 @@ const threadUnroll = {
                                 var continueFindStart = findStart;
                                 if (data.replyId == null || !data.reply) continueFindStart = false;
 
-                                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri);
+                                threadUnroll.getAllStatuses(statusID, previousStatusArr, callback, continueFindStart, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
 
                             }
                         });
@@ -198,10 +198,10 @@ const threadUnroll = {
 
                         if (data.ancestors[0].in_reply_to_id == null) {
                             //Reached the top, go back down from where whe started from
-                            threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID, instanceUri);
+                            threadUnroll.getAllStatuses(initStatusID, previousStatusArr, callback, false, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
                         } else {
                             //go up more
-                            threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID, instanceUri);
+                            threadUnroll.getAllStatuses(firstAncestorId, previousStatusArr, callback, true, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
                         }
                     }
                     else if (data.descendants.length > 0 && !findStart) {
@@ -209,7 +209,7 @@ const threadUnroll = {
                         previousStatusArr = previousStatusArr.concat(data.descendants);
 
                         var lastDescendantId = data.descendants[data.descendants.length - 1].id;
-                        threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri);
+                        threadUnroll.getAllStatuses(lastDescendantId, previousStatusArr, callback, false, initStatusID, instanceUri, statusBlocklist, brokenThreadContinue);
                     } else {
                         //Sort the resulting array based on the "in_reply_to_id"
                         //get the first element where "in_reply_to_id" is null
@@ -222,15 +222,19 @@ const threadUnroll = {
                             }
                         });
 
-                        //console.log(previousStatusArr);
-
                         var originalPoster = sortedStatusArr[0].account.id;
                         var failedFinds = 0;
-
                         while (sortedStatusArr.length + failedFinds < previousStatusArr.length) {
                             var previousStatus = sortedStatusArr[sortedStatusArr.length - 1];
                             if (previousStatus) {
                                 var foundStatus = previousStatusArr.find(e => e.in_reply_to_id == previousStatus.id && e.account.id == originalPoster);
+                                if (foundStatus) {
+                                    if (statusBlocklist.includes(foundStatus.id)) {
+                                        foundStatus.blocked = true;
+                                    } else {
+                                        foundStatus.blocked = false;
+                                    }
+                                }
                                 sortedStatusArr.push(foundStatus);
                             } else {
                                 failedFinds++;
@@ -336,7 +340,7 @@ const threadUnroll = {
         statusArr.forEach(status => {
             if (status === undefined) return;
             //Only list posts from OP.
-            if (statusArr[0].account.url == status.account.url) {
+            if (statusArr[0].account.url == status.account.url && !status.blocked) {
 
                 var statusBoxWrapper = document.createElement("a");
                 statusBoxWrapper.className = "statusBoxWrapper";
